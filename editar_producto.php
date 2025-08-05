@@ -6,11 +6,11 @@ include 'includes/header.php';
 $mensaje = '';
 $producto = null;
 
-if (isset($_GET['id'])) {
-    $id_producto = $_GET['id'];
+if (isset($_GET['CODIGO'])) {
+    $CODIGO = $_GET['CODIGO'];
     try {
-        $stmt = $pdo->prepare("SELECT * FROM productos WHERE id_producto = ?");
-        $stmt->execute([$id_producto]);
+        $stmt = $pdo->prepare("SELECT * FROM papeleria WHERE CODIGO = ?");
+        $stmt->execute([$CODIGO]);
         $producto = $stmt->fetch();
 
         if (!$producto) {
@@ -24,26 +24,24 @@ if (isset($_GET['id'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $producto) {
-    $id_producto = $_POST['id_producto']; // Asegúrate de pasar el ID oculto
-    $nombre = trim($_POST['nombre']);
-    $descripcion = trim($_POST['descripcion']);
-    $precio_compra = trim($_POST['precio_compra']);
-    $precio_venta = trim($_POST['precio_venta']);
-    $stock = trim($_POST['stock']);
-    $stock_minimo = trim($_POST['stock_minimo']);
+    $id_producto = $_POST['CODIGO']; // Asegúrate de pasar el ID oculto
+    $descripcion = trim($_POST['PRODUCTO']);
+    $cantidad = trim($_POST['CANT']);
+    $unidad = trim($_POST['UNIDAD']);
+
 
     // Validaciones básicas
-    if (empty($nombre) || empty($precio_compra) || empty($precio_venta) || $stock === '' || $stock_minimo === '') {
+    if (empty($id_producto) || empty($descripcion) || empty($cantidad) || empty($unidad)) {
         $mensaje = "<p class='btn-danger'>Todos los campos obligatorios deben ser llenados.</p>";
-    } elseif (!is_numeric($precio_compra) || !is_numeric($precio_venta) || !is_numeric($stock) || !is_numeric($stock_minimo)) {
+    } elseif (!is_numeric($unidad)) {
         $mensaje = "<p class='btn-danger'>Los precios y el stock deben ser números.</p>";
     } else {
         try {
-            $stmt = $pdo->prepare("UPDATE productos SET nombre = ?, descripcion = ?, precio_compra = ?, precio_venta = ?, stock = ?, stock_minimo = ? WHERE id_producto = ?");
-            $stmt->execute([$nombre, $descripcion, $precio_compra, $precio_venta, $stock, $stock_minimo, $id_producto]);
+            $stmt = $pdo->prepare("UPDATE papeleria SET descripcion = ?, cantidad = ?, unidad = ? WHERE CODIGO = ?");
+            $stmt->execute([$descripcion, $cantidad, $unidad, $id_producto]);
             $mensaje = "<p class='btn-success'>Producto actualizado correctamente.</p>";
             // Actualizar la variable $producto para mostrar los nuevos datos en el formulario
-            $stmt = $pdo->prepare("SELECT * FROM productos WHERE id_producto = ?");
+            $stmt = $pdo->prepare("SELECT * FROM descripcion WHERE CODIGO = ?");
             $stmt->execute([$id_producto]);
             $producto = $stmt->fetch();
         } catch (PDOException $e) {
@@ -58,26 +56,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $producto) {
 <?php echo $mensaje; ?>
 
 <?php if ($producto): ?>
-    <form action="editar_producto.php?id=<?php echo htmlspecialchars($producto['id_producto']); ?>" method="POST">
-        <input type="hidden" name="id_producto" value="<?php echo htmlspecialchars($producto['id_producto']); ?>">
+    <form action="editar_producto.php?id=<?php echo htmlspecialchars($producto['CODIGO']); ?>" method="POST">
+        <input type="hidden" name="id_producto" value="<?php echo htmlspecialchars($producto['CODIGO']); ?>">
 
-        <label for="nombre">Nombre del Producto:</label>
-        <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($producto['nombre']); ?>" required>
+        <label for="nombre">CODIGO:</label>
+        <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($producto['CODIGO']); ?>" required>
+        
+        <label for="nombre">PRODUCTO:</label>
+        <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($producto['PRODUCTO']); ?>" required>
 
-        <label for="descripcion">Descripción:</label>
-        <textarea id="descripcion" name="descripcion"><?php echo htmlspecialchars($producto['descripcion']); ?></textarea>
-
-        <label for="precio_compra">Precio de Compra:</label>
-        <input type="number" id="precio_compra" name="precio_compra" step="0.01" value="<?php echo htmlspecialchars($producto['precio_compra']); ?>" required>
-
-        <label for="precio_venta">Precio de Venta:</label>
-        <input type="number" id="precio_venta" name="precio_venta" step="0.01" value="<?php echo htmlspecialchars($producto['precio_venta']); ?>" required>
-
-        <label for="stock">Stock Actual:</label>
-        <input type="number" id="stock" name="stock" value="<?php echo htmlspecialchars($producto['stock']); ?>" required>
-
-        <label for="stock_minimo">Stock Mínimo (Alerta):</label>
-        <input type="number" id="stock_minimo" name="stock_minimo" value="<?php echo htmlspecialchars($producto['stock_minimo']); ?>" required>
+        <label for="descripcion">CANTIDAD</label>
+        <textarea id="descripcion" name="descripcion"><?php echo htmlspecialchars($producto['CANTIDAD']); ?></textarea>
+        
+        <label for="descripcion">UNIDAD</label>
+        <textarea id="descripcion" name="descripcion"><?php echo htmlspecialchars($producto['CANTIDAD']); ?></textarea>
 
         <button type="submit" class="btn btn-warning">Actualizar Producto</button>
         <a href="productos.php" class="btn">Volver a Productos</a>
