@@ -4,7 +4,7 @@
 
 
     try {
-        $stmt_productosA = $pdo->query("SELECT * FROM aseo");
+        $stmt_productosA = $pdo->query("SELECT COUNT(*) FROM aseo");
         $stmt_productosP = $pdo->query("SELECT COUNT(*) FROM papeleria");
         $stmt_productosF = $pdo->query("SELECT COUNT(*) FROM ferreteria");
     } catch (PDOException $e) {
@@ -32,7 +32,7 @@
 <body>
     <h2>Resumen del Inventario</h2>
     <div class="dashborad-stats">
-        <p>Productos de Aseo: <strong><?php echo $stmt_productosA->rowCount(); ?></strong></p>
+        <p>Productos de Aseo: <strong><?php echo $stmt_productosA->fetchColumn(); ?></strong></p>
         <p>Productos de Papelería: <strong><?php echo $stmt_productosP->fetchColumn(); ?></strong></p>
         <p>Productos de Ferretería: <strong><?php echo $stmt_productosF->fetchColumn(); ?></strong></p>
     </div>

@@ -13,7 +13,7 @@
             <nav>
                 <ul>
                     <il><a href="index.php">Inicio</a></li>
-                    <li><a href="producto_Papeleria.php">Productos</a></li>
+                    <li><a href="producto_categoria.php">Productos</a></li>
                     <li><a href="categorias.php">Categorías</a></li>
                     <li><a href="reportes.php">Reportes</a></li>
                 </ul>
