@@ -50,5 +50,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <a href="producto_Papeleria.php" class="btn">Volver a Productos</a>
 </form>
 
-
 <?php include 'includes/footer.php'; ?>
