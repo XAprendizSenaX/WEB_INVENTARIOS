@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <input type="text" id="unidad" name="UNIDAD" required>
 
     <button type="submit" class="btn btn-primary">Agregar Producto</button>
-    <a href="producto_categori.php" class="btn">Volver a Productos</a>
+    <a href="producto_categoria.php" class="btn">Volver a Productos</a>
 </form>
 
 <?php include 'includes/footer.php'; ?>
