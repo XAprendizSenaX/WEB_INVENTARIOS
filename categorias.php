@@ -10,27 +10,48 @@ $categorias = [];
 
 // --- Funciones auxiliares para la creación dinámica de tablas y triggers ---
 
-// Función para crear una nueva tabla de categoría
-function crearTablaCategoria($pdo, $nombre_tabla) {
+/**
+ * Crea una nueva tabla para una categoría en la base de datos.
+ *
+ * @param PDO $pdo Objeto de conexión PDO.
+ * @param string $nombre_tabla El nombre de la nueva tabla a crear.
+ * @return bool Retorna true si la tabla se creó con éxito, false en caso contrario.
+ */
+function crearTablaCategoria($pdo, $nombre_tabla)
+{
     // Asegurarse de que el nombre de la tabla sea seguro
     if (!preg_match('/^[a-z0-9_]+$/i', $nombre_tabla)) {
-        return false; // Nombre de tabla no válido
+        return false;
     }
 
     $sql = "
         CREATE TABLE IF NOT EXISTS `$nombre_tabla` (
-            CODIGO VARCHAR(255) PRIMARY KEY,
-            CODIGO_BARRAS VARCHAR(255),
-            PRODUCTO VARCHAR(255) NOT NULL,
-            CANT INT NOT NULL,
-            UNIDAD enum ('UNIDAD','CAJA','EMPAQUE','PACA', 'PAR','FRASCO') NOT NULL
-        )
-    ";
-    return $pdo->exec($sql);
+        CODIGO varchar(255) primary key,
+        CODIGO_BARRAS varchar(255), 
+        PRODUCTO varchar(255) not null,
+        CANT bigint(255) NOT NULL,
+        UNIDAD enum ('UNIDAD','CAJA','EMPAQUE','PACA', 'PAR','FRASCO')
+        )";
+    try {
+        $pdo->exec($sql);
+        // Verificar si la tabla existe después de intentar crearla
+        $stmt = $pdo->query("SHOW TABLES LIKE '{$nombre_tabla}'");
+        return $stmt->rowCount() > 0;
+    } catch (PDOException $e) {
+        // En caso de error, retorna false
+        return false;
+    }
 }
 
-// Función para crear el trigger de código de barras para una tabla específica
-function crearTriggerCodigoBarras($pdo, $nombre_tabla) {
+/**
+ * Crea un trigger para generar el código de barras en una tabla específica.
+ *
+ * @param PDO $pdo Objeto de conexión PDO.
+ * @param string $nombre_tabla El nombre de la tabla para el trigger.
+ * @return bool Retorna true si el trigger se creó con éxito, false en caso contrario.
+ */
+function crearTriggerCodigoBarras($pdo, $nombre_tabla)
+{
     if (!preg_match('/^[a-z0-9_]+$/i', $nombre_tabla)) {
         return false;
     }
@@ -43,7 +64,12 @@ function crearTriggerCodigoBarras($pdo, $nombre_tabla) {
             SET NEW.CODIGO_BARRAS = CONCAT('*', NEW.CODIGO, '*');
         END
     ";
-    return $pdo->exec($sql);
+    try {
+        $pdo->exec($sql);
+        return true;
+    } catch (PDOException $e) {
+        return false;
+    }
 }
 
 
@@ -65,12 +91,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nueva_categoria'])) {
                 $mensaje = "<p class='btn-danger'>La categoría '$nueva_categoria_nombre' ya existe.</p>";
             } else {
                 $pdo->beginTransaction(); // Se inicia la transacción aquí, dentro del bloque try
-                if (crearTablaCategoria($pdo, $nueva_categoria_nombre) === false) {
-                    throw new Exception("Error al crear la tabla.");
+
+                // Intentar crear la tabla
+                if (!crearTablaCategoria($pdo, $nueva_categoria_nombre)) {
+                    throw new Exception("Error: No se pudo crear la tabla. Verifique los permisos del usuario de la base de datos.");
                 }
-                if (crearTriggerCodigoBarras($pdo, $nueva_categoria_nombre) === false) {
-                     throw new Exception("Error al crear el trigger.");
+
+                // Intentar crear el trigger
+                if (!crearTriggerCodigoBarras($pdo, $nueva_categoria_nombre)) {
+                    throw new Exception("Error: No se pudo crear el trigger. Verifique los permisos del usuario de la base de datos.");
                 }
+
+                // Insertar el nombre de la categoría en la tabla `categorias`
                 $stmt = $pdo->prepare("INSERT INTO categorias (nombre_categoria) VALUES (?)");
                 $stmt->execute([$nueva_categoria_nombre]);
                 $pdo->commit();
@@ -101,10 +133,12 @@ try {
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Gestor de Categorías</title>
 </head>
+
 <body>
     <h2>Gestor de Categorías</h2>
     <?php echo $mensaje; ?>
@@ -135,6 +169,7 @@ try {
     <?php endif; ?>
     <hr>
 </body>
+
 </html>
 
 <?php include 'includes/footer.php'; ?>

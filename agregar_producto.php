@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if (!empty($codigo) && !empty($producto) && !empty($cant) && !empty($unidad)) {
         // Preparar la consulta SQL para agregar un nuevo producto
-        $sql = 'INSERT INTO papeleria (CODIGO, PRODUCTO, CANT, UNIDAD) VALUES (?, ?, ?, ?)';
+        $sql = 'INSERT INTO `nombre_tabla` (CODIGO, PRODUCTO, CANT, UNIDAD) VALUES (?, ?, ?, ?)';
         $stmt = $pdo->prepare($sql);
 
         // Ejecutar la consulta con un array de parámetros
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <label for="cant">Cantidad:</label>
     <input type="number" id="cant" name="CANT" step="1" required>
 
-    <label for="unidad">Medida:</label>
+    <label for="unidad">Unidad:</label>
     <input type="text" id="unidad" name="UNIDAD" required>
 
     <button type="submit" class="btn btn-primary">Agregar Producto</button>

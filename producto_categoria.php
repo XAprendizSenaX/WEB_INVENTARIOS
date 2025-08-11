@@ -32,7 +32,7 @@ try {
 
 <?php echo $mensaje; ?>
 
-<p><a href="agregar_producto.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
+<p><a href="agregar.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
 
 <?php if (count($papeleria) > 0): ?>
     <table>
@@ -53,7 +53,7 @@ try {
                 <td><?php echo htmlspecialchars($papeleria['CANT']); ?></td>
                 <td>
                     <a href="editar_producto.php?id=<?php echo $papeleria['CODIGO']; ?>" class="btn btn-warning">Editar</a>
-                    <a href="producto_Papeleria.php?action=eliminar&id=<?php echo $papeleria['CODIGO']; ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar este producto? Esto también eliminará sus movimientos asociados.');">Eliminar</a>
+                    <a href="producto_categoria.php?action=eliminar&id=<?php echo $papeleria['CODIGO']; ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar este producto? Esto también eliminará sus movimientos asociados.');">Eliminar</a>
                 </td>
             </tr>
             <?php endforeach; ?>
@@ -94,7 +94,7 @@ try {
 
 <?php echo $mensaje; ?>
 
-<p><a href="agregar_producto.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
+<p><a href="agregar.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
 
 <?php if (count($ferreteria) > 0): ?>
     <table>
@@ -115,7 +115,7 @@ try {
                 <td><?php echo htmlspecialchars($ferreteria['CANT']); ?></td>
                 <td>
                     <a href="editar_producto.php?id=<?php echo $ferreteria['CODIGO']; ?>" class="btn btn-warning">Editar</a>
-                    <a href="producto_Papeleria.php?action=eliminar&id=<?php echo $ferreteria['CODIGO']; ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar este producto? Esto también eliminará sus movimientos asociados.');">Eliminar</a>
+                    <a href="producto_categoria.php?action=eliminar&id=<?php echo $ferreteria['CODIGO']; ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar este producto? Esto también eliminará sus movimientos asociados.');">Eliminar</a>
                 </td>
             </tr>
             <?php endforeach; ?>
@@ -154,7 +154,7 @@ try {
 
 <?php echo $mensaje; ?>
 
-<p><a href="agregar_producto.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
+<p><a href="agregar.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
 
 <?php if (count($aseo) > 0): ?>
     <table>
@@ -175,7 +175,7 @@ try {
                 <td><?php echo htmlspecialchars($aseo['CANT']); ?></td>
                 <td>
                     <a href="editar_producto.php?id=<?php echo $aseo['CODIGO']; ?>" class="btn btn-warning">Editar</a>
-                    <a href="producto_Papeleria.php?action=eliminar&id=<?php echo $aseo['CODIGO']; ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar este producto? Esto también eliminará sus movimientos asociados.');">Eliminar</a>
+                    <a href="producto_categoria.php?action=eliminar&id=<?php echo $aseo['CODIGO']; ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar este producto? Esto también eliminará sus movimientos asociados.');">Eliminar</a>
                 </td>
             </tr>
             <?php endforeach; ?>
