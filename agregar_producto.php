@@ -1,12 +1,25 @@
 <?php
 // agregar_producto.php
-// Este script agrega un nuevo producto a la tabla 'papeleria'
+// Este script agrega un nuevo producto a la categoría (tabla) seleccionada
 include 'includes/db.php';
 include 'includes/header.php';
 
 $mensaje = '';
+$categoria_seleccionada = isset($_GET['categoria']) ? $_GET['categoria'] : null;
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+// Bloque GET: Validar el nombre de la categoría
+if (empty($categoria_seleccionada)) {
+    $mensaje = "<p class='btn-danger'>❌ Error: No se ha especificado una categoría para agregar productos.</p>";
+} else {
+    // Asegurarse de que el nombre de la tabla sea seguro para evitar SQL Injection
+    if (!preg_match('/^[a-z0-9_]+$/i', $categoria_seleccionada)) {
+        $mensaje = "<p class='btn-danger'>❌ Error: Nombre de categoría no válido.</p>";
+        $categoria_seleccionada = null; // Desactiva la funcionalidad
+    }
+}
+
+// Bloque POST: Procesar el formulario
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && $categoria_seleccionada) {
     // Recolectar datos del formulario
     $codigo = $_POST['CODIGO'];
     $producto = $_POST['PRODUCTO'];
@@ -14,15 +27,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $unidad = $_POST['UNIDAD'];
 
     if (!empty($codigo) && !empty($producto) && !empty($cant) && !empty($unidad)) {
-        // Preparar la consulta SQL para agregar un nuevo producto
-        $sql = 'INSERT INTO `nombre_tabla` (CODIGO, PRODUCTO, CANT, UNIDAD) VALUES (?, ?, ?, ?)';
-        $stmt = $pdo->prepare($sql);
+        // La consulta SQL ahora usa la variable $categoria_seleccionada
+        try {
+            $sql = "INSERT INTO `$categoria_seleccionada` (CODIGO, PRODUCTO, CANT, UNIDAD) VALUES (?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
 
-        // Ejecutar la consulta con un array de parámetros
-        if ($stmt->execute([$codigo, $producto, $cant, $unidad])) {
-            $mensaje = "<p class='btn-success'>✅ Producto agregado correctamente.</p>";
-        } else {
-            $mensaje = "<p class='btn-danger'>❌ Error al agregar el producto.</p>";
+            if ($stmt->execute([$codigo, $producto, $cant, $unidad])) {
+                $mensaje = "<p class='btn-success'>✅ Producto agregado a la categoría '" . htmlspecialchars($categoria_seleccionada) . "' correctamente.</p>";
+            } else {
+                $mensaje = "<p class='btn-danger'>❌ Error al agregar el producto.</p>";
+            }
+        } catch (PDOException $e) {
+            $mensaje = "<p class='btn-danger'>❌ Error de base de datos: " . $e->getMessage() . "</p>";
         }
     } else {
         $mensaje = "<p class='btn-warning'>⚠️ Por favor, complete todos los campos.</p>";
@@ -33,21 +49,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <h2>Agregar Nuevo Producto</h2>
 <?php echo $mensaje; ?>
 
-<form action="agregar_producto.php" method="POST">
-    <label for="codigo">Código:</label>
-    <input type="text" id="codigo" name="CODIGO" required>
+<?php if ($categoria_seleccionada): ?>
+    <h3>Agregando a la categoría: "<?php echo htmlspecialchars($categoria_seleccionada); ?>"</h3>
+    <form action="agregar.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>" method="POST">
+        <label for="codigo">Código:</label>
+        <input type="text" id="codigo" name="CODIGO" required>
 
-    <label for="producto">Nombre del Producto:</label>
-    <input type="text" id="producto" name="PRODUCTO" required>
-    
-    <label for="cant">Cantidad:</label>
-    <input type="number" id="cant" name="CANT" step="1" required>
+        <label for="producto">Nombre del Producto:</label>
+        <input type="text" id="producto" name="PRODUCTO" required>
+        
+        <label for="cant">Cantidad:</label>
+        <input type="number" id="cant" name="CANT" step="1" required>
 
-    <label for="unidad">Unidad:</label>
-    <input type="text" id="unidad" name="UNIDAD" required>
+        <label for="unidad">Unidad:</label>
+        <input type="text" id="unidad" name="UNIDAD" required>
 
-    <button type="submit" class="btn btn-primary">Agregar Producto</button>
-    <a href="producto_categoria.php" class="btn">Volver a Productos</a>
-</form>
+        <button type="submit" class="btn btn-primary">Agregar Producto</button>
+        <a href="categorias.php" class="btn">Volver a Categorías</a>
+    </form>
+<?php else: ?>
+    <p>Por favor, seleccione una categoría desde la página <a href="categorias.php">Gestor de Categorías</a>.</p>
+<?php endif; ?>
 
 <?php include 'includes/footer.php'; ?>

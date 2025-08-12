@@ -32,7 +32,7 @@ try {
 
 <?php echo $mensaje; ?>
 
-<p><a href="agregar.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
+<p><a href="agregar_producto.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
 
 <?php if (count($papeleria) > 0): ?>
     <table>

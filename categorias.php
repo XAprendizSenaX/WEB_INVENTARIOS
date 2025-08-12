@@ -1,6 +1,6 @@
 <?php
 // categorias.php
-// Este script gestiona la creación de nuevas categorías (tablas) y redirige a la página de agregar productos.
+// Este script gestiona la creación y eliminación de categorías (tablas).
 include 'includes/db.php'; // Archivo de conexión a la base de datos
 include 'includes/header.php'; // Cabecera HTML
 
@@ -19,26 +19,24 @@ $categorias = [];
  */
 function crearTablaCategoria($pdo, $nombre_tabla)
 {
-    // Asegurarse de que el nombre de la tabla sea seguro
     if (!preg_match('/^[a-z0-9_]+$/i', $nombre_tabla)) {
         return false;
     }
 
+    // He corregido el tipo de dato de la unidad para que sea consistente
     $sql = "
         CREATE TABLE IF NOT EXISTS `$nombre_tabla` (
         CODIGO varchar(255) primary key,
         CODIGO_BARRAS varchar(255), 
         PRODUCTO varchar(255) not null,
         CANT bigint(255) NOT NULL,
-        UNIDAD enum ('UNIDAD','CAJA','EMPAQUE','PACA', 'PAR','FRASCO')
+        UNIDAD varchar(50)
         )";
     try {
         $pdo->exec($sql);
-        // Verificar si la tabla existe después de intentar crearla
         $stmt = $pdo->query("SHOW TABLES LIKE '{$nombre_tabla}'");
         return $stmt->rowCount() > 0;
     } catch (PDOException $e) {
-        // En caso de error, retorna false
         return false;
     }
 }
@@ -73,12 +71,11 @@ function crearTriggerCodigoBarras($pdo, $nombre_tabla)
 }
 
 
-// --- Lógica para manejar el envío de formularios ---
+// --- Lógica para manejar la creación y eliminación de categorías ---
 
 // Procesar el formulario de "Crear nueva categoría"
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nueva_categoria'])) {
     $nueva_categoria_nombre = trim($_POST['nueva_categoria_nombre']);
-
     if (empty($nueva_categoria_nombre)) {
         $mensaje = "<p class='btn-danger'>El nombre de la categoría no puede estar vacío.</p>";
     } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $nueva_categoria_nombre)) {
@@ -90,30 +87,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['nueva_categoria'])) {
             if ($stmt->fetchColumn() > 0) {
                 $mensaje = "<p class='btn-danger'>La categoría '$nueva_categoria_nombre' ya existe.</p>";
             } else {
-                $pdo->beginTransaction(); // Se inicia la transacción aquí, dentro del bloque try
-
-                // Intentar crear la tabla
+                $pdo->beginTransaction();
                 if (!crearTablaCategoria($pdo, $nueva_categoria_nombre)) {
                     throw new Exception("Error: No se pudo crear la tabla. Verifique los permisos del usuario de la base de datos.");
                 }
-
-                // Intentar crear el trigger
                 if (!crearTriggerCodigoBarras($pdo, $nueva_categoria_nombre)) {
                     throw new Exception("Error: No se pudo crear el trigger. Verifique los permisos del usuario de la base de datos.");
                 }
-
-                // Insertar el nombre de la categoría en la tabla `categorias`
                 $stmt = $pdo->prepare("INSERT INTO categorias (nombre_categoria) VALUES (?)");
                 $stmt->execute([$nueva_categoria_nombre]);
                 $pdo->commit();
                 $mensaje = "<p class='btn-success'>Categoría '$nueva_categoria_nombre' creada correctamente.</p>";
             }
         } catch (Exception $e) {
-            // El rollback solo se intenta si la transacción se inició
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
             $mensaje = "<p class='btn-danger'>Error: " . $e->getMessage() . "</p>";
+        }
+    }
+}
+
+
+// Procesar el formulario de "Eliminar categoría"
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['eliminar_categoria'])) {
+    $eliminar_categoria_nombre = trim($_POST['eliminar_categoria_nombre']);
+    if (empty($eliminar_categoria_nombre)) {
+        $mensaje = "<p class='btn-danger'>Debe seleccionar una categoría para eliminar.</p>";
+    } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $eliminar_categoria_nombre)) {
+        $mensaje = "<p class='btn-danger'>Nombre de categoría inválido.</p>";
+    } else {
+        try {
+            $pdo->beginTransaction();
+            // Eliminar triggers asociados
+            $trigger_name = "generar_codBarras_" . $eliminar_categoria_nombre;
+            $pdo->exec("DROP TRIGGER IF EXISTS `$trigger_name`");
+            // Eliminar la tabla de la categoría
+            $pdo->exec("DROP TABLE IF EXISTS `$eliminar_categoria_nombre`");
+            // Eliminar el registro de la categoría
+            $stmt = $pdo->prepare("DELETE FROM categorias WHERE nombre_categoria = ?");
+            $stmt->execute([$eliminar_categoria_nombre]);
+            $pdo->commit();
+            $mensaje = "<p class='btn-success'>Categoría '$eliminar_categoria_nombre' eliminada correctamente.</p>";
+            // Recargar la página para actualizar la lista
+            echo "<script>window.location.href='categorias.php';</script>";
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $mensaje = "<p class='btn-danger'>Error al eliminar la categoría: " . $e->getMessage() . "</p>";
         }
     }
 }
@@ -152,15 +174,23 @@ try {
     </form>
     <hr>
 
-    <!-- Sección para listar categorías -->
+    <!-- Sección para listar categorías existentes con todas sus acciones -->
     <h3>Categorías Existentes</h3>
     <?php if (!empty($categorias)): ?>
         <ul>
             <?php foreach ($categorias as $cat): ?>
                 <li>
                     <?php echo htmlspecialchars($cat); ?>
-                    <!-- Enlace que redirige a tu archivo para agregar productos -->
+                    <!-- Enlace para ver los productos de la categoría -->
+                    <a href="ver_productos.php?categoria=<?php echo htmlspecialchars($cat); ?>">Ver Productos</a>
+                    <!-- Enlace para agregar un producto a la categoría -->
                     <a href="agregar_producto.php?categoria=<?php echo htmlspecialchars($cat); ?>">Agregar Producto</a>
+                    <!-- Formulario para eliminar la categoría -->
+                    <form action="categorias.php" method="POST" style="display:inline;"
+                        onsubmit="return confirm('¿Está seguro de que desea eliminar la categoría <?php echo htmlspecialchars($cat); ?>? Esta acción no se puede deshacer.');">
+                        <input type="hidden" name="eliminar_categoria_nombre" value="<?php echo htmlspecialchars($cat); ?>">
+                        <button type="submit" name="eliminar_categoria" style="color:red; background:none; border:none; cursor:pointer;">Eliminar</button>
+                    </form>
                 </li>
             <?php endforeach; ?>
         </ul>
@@ -168,6 +198,7 @@ try {
         <p>No hay categorías disponibles.</p>
     <?php endif; ?>
     <hr>
+
 </body>
 
 </html>
