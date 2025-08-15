@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $categoria_seleccionada) {
 
 <?php if ($categoria_seleccionada): ?>
     <h3>Agregando a la categoría: "<?php echo htmlspecialchars($categoria_seleccionada); ?>"</h3>
-    <form action="agregar.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>" method="POST">
+    <form action="agregar_producto.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>" method="POST">
         <label for="codigo">Código:</label>
         <input type="text" id="codigo" name="CODIGO" required>
 
