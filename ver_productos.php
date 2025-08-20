@@ -47,3 +47,9 @@ try {
     $productos = [];
 }
 ?>
+
+<h2>Gestion de <?php echo htmlspecialchars($categoria_seleccionada); ?></h2>
+
+<?php echo $mensaje; ?>
+
+<p><a href="agregar_producto.php?categoria=<?php  ?>"></a></p>
