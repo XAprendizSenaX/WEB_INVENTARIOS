@@ -1,188 +1,75 @@
 <?php
-// papeleria.php
+// ver_todas_categorias.php
+// Este script muestra todos los productos, organizados por categoría (tabla).
+
 include 'includes/db.php';
 include 'includes/header.php';
 
 $mensaje = '';
+$categorias = [];
 
-// Lógica para eliminar un producto
-if (isset($_GET['action']) && $_GET['action'] == 'eliminar' && isset($_GET['id'])) {
-    $CODIGO = $_GET['id'];
-    try {
-        // Eliminar también los movimientos asociados (gracias a ON DELETE CASCADE)
-        $stmt = $pdo->prepare("DELETE FROM papeleria WHERE CODIGO = ?");
-        $stmt->execute([$CODIGO]);
-        $mensaje = "<p class='btn-success'>Producto eliminado correctamente.</p>";
-    } catch (PDOException $e) {
-        $mensaje = "<p class='btn-danger'>Error al eliminar el producto: " . $e->getMessage() . "</p>";
-    }
-}
-
-// Obtener todos los papeleria
+// Obtener todas las categorías de la tabla 'categorias'
 try {
-    $stmt = $pdo->query("SELECT * FROM papeleria ORDER BY CODIGO ASC");
-    $papeleria = $stmt->fetchAll();
+    $stmt_categorias = $pdo->query("SELECT nombre_categoria FROM categorias ORDER BY nombre_categoria");
+    $categorias = $stmt_categorias->fetchAll(PDO::FETCH_COLUMN);
 } catch (PDOException $e) {
-    echo "<p class='error'>Error al cargar los papeleria: " . $e->getMessage() . "</p>";
-    $papeleria = [];
+    $mensaje = "<p class='btn-danger'>❌ Error al cargar las categorías: " . $e->getMessage() . "</p>";
 }
+
 ?>
 
-<h2>Gestión de papeleria</h2>
+<h2>Inventario General por Categoría</h2>
 
 <?php echo $mensaje; ?>
 
-<p><a href="agregar_producto.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
+<?php if (!empty($categorias)): ?>
+    <?php foreach ($categorias as $categoria_nombre): ?>
+        <h3>Categoría: <?php echo htmlspecialchars(ucfirst($categoria_nombre)); ?></h3>
+        <?php
+            $productos = [];
+            try {
+                // Obtener todos los productos de la tabla de la categoría actual
+                $stmt_productos = $pdo->prepare("SELECT * FROM `$categoria_nombre` ORDER BY CODIGO ASC");
+                $stmt_productos->execute();
+                $productos = $stmt_productos->fetchAll();
+            } catch (PDOException $e) {
+                echo "<p class='btn-danger'>❌ Error al cargar los productos de la categoría '" . htmlspecialchars($categoria_nombre) . "': " . $e->getMessage() . "</p>";
+            }
+        ?>
 
-<?php if (count($papeleria) > 0): ?>
-    <table>
-        <thead>
-            <tr>
-                <th>CODIGO</th>
-                <th>CODIGO DE BARAS</th>
-                <th>DESCRIPCION</th>
-                <th>CANTIDAD</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($papeleria as $papeleria): ?>
-            <tr>
-                <td><?php echo htmlspecialchars($papeleria['CODIGO']); ?></td>
-                <td><?php echo htmlspecialchars($papeleria['CODIGO_BARRAS']); ?></td>
-                <td><?php echo htmlspecialchars($papeleria['PRODUCTO']); ?></td>
-                <td><?php echo htmlspecialchars($papeleria['CANT']); ?></td>
-                <td>
-                    <a href="editar_producto.php?id=<?php echo $papeleria['CODIGO']; ?>" class="btn btn-warning">Editar</a>
-                    <a href="producto_categoria.php?action=eliminar&id=<?php echo $papeleria['CODIGO']; ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar este producto? Esto también eliminará sus movimientos asociados.');">Eliminar</a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+        <?php if (!empty($productos)): ?>
+            <table>
+                <thead>
+                    <tr>
+                        <th>CÓDIGO</th>
+                        <th>CÓDIGO DE BARRAS</th>
+                        <th>DESCRIPCIÓN</th>
+                        <th>CANTIDAD</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($productos as $producto): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($producto['CODIGO']); ?></td>
+                            <td><?php echo htmlspecialchars($producto['CODIGO_BARRAS']); ?></td>
+                            <td><?php echo htmlspecialchars($producto['PRODUCTO']); ?></td>
+                            <td><?php echo htmlspecialchars($producto['CANT']); ?></td>
+                            <td>
+                                <a href="editar_producto.php?categoria=<?php echo htmlspecialchars($categoria_nombre); ?>&id=<?php echo htmlspecialchars($producto['CODIGO']); ?>" class="btn btn-warning">Editar</a>
+                                <a href="ver_productos.php?categoria=<?php echo htmlspecialchars($categoria_nombre); ?>&action=eliminar&id=<?php echo htmlspecialchars($producto['CODIGO']); ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar este producto?');">Eliminar</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <p>No hay productos registrados en esta categoría.</p>
+        <?php endif; ?>
+        <hr>
+    <?php endforeach; ?>
 <?php else: ?>
-    <p>No hay papeleria registrados en el inventario.</p>
-<?php endif; ?>
-
-
-
-<?php
-
-// Tabla Ferrerteria
-if (isset($_GET['action']) && $_GET['action'] == 'eliminar' && isset($_GET['id'])) {
-    $CODIGO = $_GET['id'];
-    try {
-        // Eliminar también los movimientos asociados (gracias a ON DELETE CASCADE)
-        $stmt = $pdo->prepare("DELETE FROM ferreteria WHERE CODIGO = ?");
-        $stmt->execute([$CODIGO]);
-        $mensaje = "<p class='btn-success'>Producto eliminado correctamente.</p>";
-    } catch (PDOException $e) {
-        $mensaje = "<p class='btn-danger'>Error al eliminar el producto: " . $e->getMessage() . "</p>";
-    }
-}
-
-// Obtener todos los Ferreteria
-try {
-    $stmt = $pdo->query("SELECT * FROM ferreteria ORDER BY CODIGO ASC");
-    $ferreteria = $stmt->fetchAll();
-} catch (PDOException $e) {
-    echo "<p class='error'>Error al cargar los papeleria: " . $e->getMessage() . "</p>";
-    $ferreteria = [];
-}
-?>
-
-<h2>Gestión de Ferreteria</h2>
-
-<?php echo $mensaje; ?>
-
-<p><a href="agregar.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
-
-<?php if (count($ferreteria) > 0): ?>
-    <table>
-        <thead>
-            <tr>
-                <th>CODIGO</th>
-                <th>CODIGO DE BARAS</th>
-                <th>DESCRIPCION</th>
-                <th>CANTIDAD</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($ferreteria as $ferreteria): ?>
-            <tr>
-                <td><?php echo htmlspecialchars($ferreteria['CODIGO']); ?></td>
-                <td><?php echo htmlspecialchars($ferreteria['CODIGO_BARRAS']); ?></td>
-                <td><?php echo htmlspecialchars($ferreteria['PRODUCTO']); ?></td>
-                <td><?php echo htmlspecialchars($ferreteria['CANT']); ?></td>
-                <td>
-                    <a href="editar_producto.php?id=<?php echo $ferreteria['CODIGO']; ?>" class="btn btn-warning">Editar</a>
-                    <a href="producto_categoria.php?action=eliminar&id=<?php echo $ferreteria['CODIGO']; ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar este producto? Esto también eliminará sus movimientos asociados.');">Eliminar</a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-<?php else: ?>
-    <p>No hay papeleria registrados en el inventario.</p>
-<?php endif; ?>
-
-
-<?php
-// Tabla Aseo
-if (isset($_GET['action']) && $_GET['action'] == 'eliminar' && isset($_GET['id'])) {
-    $CODIGO = $_GET['id'];
-    try {
-        // Eliminar también los movimientos asociados (gracias a ON DELETE CASCADE)
-        $stmt = $pdo->prepare("DELETE FROM aseo WHERE CODIGO = ?");
-        $stmt->execute([$CODIGO]);
-        $mensaje = "<p class='btn-success'>Producto eliminado correctamente.</p>";
-    } catch (PDOException $e) {
-        $mensaje = "<p class='btn-danger'>Error al eliminar el producto: " . $e->getMessage() . "</p>";
-    }
-}
-
-// Obtener todos los Ferreteria
-try {
-    $stmt = $pdo->query("SELECT * FROM aseo ORDER BY CODIGO ASC");
-    $aseo = $stmt->fetchAll();
-} catch (PDOException $e) {
-    echo "<p class='error'>Error al cargar los papeleria: " . $e->getMessage() . "</p>";
-    $aseo = [];
-}
-?>
-
-<h2>Gestión de Aseo</h2>
-
-<?php echo $mensaje; ?>
-
-<p><a href="agregar.php" class="btn btn-success">Agregar Nuevo Producto</a></p>
-
-<?php if (count($aseo) > 0): ?>
-    <table>
-        <thead>
-            <tr>
-                <th>CODIGO</th>
-                <th>CODIGO DE BARAS</th>
-                <th>DESCRIPCION</th>
-                <th>CANTIDAD</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($aseo as $aseo): ?>
-            <tr>
-                <td><?php echo htmlspecialchars($aseo['CODIGO']); ?></td>
-                <td><?php echo htmlspecialchars($aseo['CODIGO_BARRAS']); ?></td>
-                <td><?php echo htmlspecialchars($aseo['PRODUCTO']); ?></td>
-                <td><?php echo htmlspecialchars($aseo['CANT']); ?></td>
-                <td>
-                    <a href="editar_producto.php?id=<?php echo $aseo['CODIGO']; ?>" class="btn btn-warning">Editar</a>
-                    <a href="producto_categoria.php?action=eliminar&id=<?php echo $aseo['CODIGO']; ?>" class="btn btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar este producto? Esto también eliminará sus movimientos asociados.');">Eliminar</a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-<?php else: ?>
-    <p>No hay papeleria registrados en el inventario.</p>
+    <p>No hay categorías disponibles en el inventario.</p>
 <?php endif; ?>
 
 <?php include 'includes/footer.php'; ?>

@@ -52,4 +52,37 @@ try {
 
 <?php echo $mensaje; ?>
 
-<p><a href="agregar_producto.php?categoria=<?php  ?>"></a></p>
+<p><a href="agregar_producto.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>" class="btn btn-success">Agergar Nuevo Producto</a></p>
+<p><a href="categorias.php" class="btn">Volver a Categorías</a></p>
+
+<?php if (count($productos) > 0): ?>
+    <table>
+        <thead>
+            <tr>
+                <th>CODIGO</th>
+                <th>CODIGO DE BARRAS</th>
+                <th>DESCRIPCION</th>
+                <th>CANTIDAD</th>
+                <th>ACCIONES</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($productos as $producto): ?>
+            <tr>
+                <td><?php echo htmlspecialchars($producto ['CODIGO']); ?></td>
+                <td><?php echo htmlspecialchars($producto ['CODIGO_BARRAS']); ?></td>
+                <td><?php echo htmlspecialchars($producto ['PRODUCTO']); ?></td>
+                <td><?php echo htmlspecialchars($producto ['CANT']); ?></td>
+                <td>
+                    <a href="editar_producto.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>&id=<?php echo htmlspecialchars($producto['CODIGO']); ?>" class="btn btn-warning">Ediatr</a>
+                    <a href="ver_productos.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>&action=eliminar&id=<?php echo htmlspecialchars($producto['CODIGO']); ?>" class="btn btn-danger" onclick="return confirm ('¿Está seguro de que desea eliminar el producton?');">Eliminar</a>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+<?php else: ?>
+    <p>No hay productos registrados en el inventario para la categoria '<?php echo htmlspecialchars($categoria_seleccionada); ?>'.</p>
+<?php endif; ?>
+
+<?php include 'includes/footer.php'; ?>
