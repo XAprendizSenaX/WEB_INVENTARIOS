@@ -17,6 +17,7 @@
                     <li><a href="producto_categoria.php">Productos</a></li>
                     <li><a href="categorias.php">Categorías</a></li>
                     <li><a href="reportes.php">Reportes</a></li>
+                    <li><a href="buscar_producto.php">Buscar</a></li>
                 </ul>
             </nav>
         </header>
