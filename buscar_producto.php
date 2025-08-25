@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buscar_producto'])) {
     <?php echo $mensaje; ?>
 
     <!-- Formulario de búsqueda universal de producto -->
+    <h3>Buscador Universal</h3>
     <form action="buscar_producto.php" method="POST">
         <label for="termino_busqueda">Código de Producto:</label>
         <input type="text" id="termino_busqueda" name="termino_busqueda" required placeholder="Ingrese el código del producto">
