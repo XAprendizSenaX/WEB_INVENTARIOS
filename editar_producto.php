@@ -1,17 +1,30 @@
 <?php
 // editar_producto.php
-include 'includes/db.php';
-include 'includes/header.php';
+// Este script permite editar un producto existente en la base de datos.
+require_once 'includes/db.php';
+require_once 'includes/header.php';
 
 $mensaje = '';
 $producto = null;
+$categoria = '';
+$codigo = '';
 
-if (isset($_GET['CODIGO'])) {
-    $CODIGO = $_GET['CODIGO'];
+// Verificar si se reciben los parámetros necesarios para la edición
+if (isset($_GET['id']) && isset($_GET['categoria'])) {
+    $codigo = trim($_GET['id']);
+    $categoria = trim($_GET['categoria']);
+
+    // Validar el nombre de la categoría para prevenir inyección SQL
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $categoria)) {
+        die("Nombre de categoría inválido.");
+    }
+
     try {
-        $stmt = $pdo->prepare("SELECT * FROM papeleria WHERE CODIGO = ?");
-        $stmt->execute([$CODIGO]);
-        $producto = $stmt->fetch();
+        // Consultar el producto a editar
+        $sql = "SELECT * FROM `$categoria` WHERE CODIGO = :codigo";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':codigo' => $codigo]);
+        $producto = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$producto) {
             $mensaje = "<p class='btn-danger'>Producto no encontrado.</p>";
@@ -20,30 +33,32 @@ if (isset($_GET['CODIGO'])) {
         $mensaje = "<p class='btn-danger'>Error al cargar el producto: " . $e->getMessage() . "</p>";
     }
 } else {
-    $mensaje = "<p class='btn-danger'>ID de producto no especificado.</p>";
+    $mensaje = "<p class='btn-danger'>No se especificó un producto o categoría para editar.</p>";
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && $producto) {
-    $id_producto = $_POST['CODIGO']; // Asegúrate de pasar el ID oculto
-    $descripcion = trim($_POST['PRODUCTO']);
-    $cantidad = trim($_POST['CANT']);
-    $unidad = trim($_POST['UNIDAD']);
+// Procesar la actualización del producto si se envía el formulario
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_producto'])) {
+    $codigo_antiguo = trim($_POST['codigo_antiguo']);
+    $categoria_actual = trim($_POST['categoria_actual']);
+    $nuevo_codigo = trim($_POST['nuevo_codigo']);
+    $codigo_barras = trim($_POST['codigo_barras']);
+    $descripcion = trim($_POST['descripcion']);
+    $cantidad = (int)$_POST['cantidad'];
+    $unidad = trim($_POST['unidad']);
 
-
-    // Validaciones básicas
-    if (empty($id_producto) || empty($descripcion) || empty($cantidad) || empty($unidad)) {
-        $mensaje = "<p class='btn-danger'>Todos los campos obligatorios deben ser llenados.</p>";
-    } elseif (!is_numeric($unidad)) {
-        $mensaje = "<p class='btn-danger'>Los precios y el stock deben ser números.</p>";
+    if (empty($nuevo_codigo) || empty($descripcion) || empty($cantidad)) {
+        $mensaje = "<p class='btn-danger'>Todos los campos son obligatorios.</p>";
     } else {
         try {
-            $stmt = $pdo->prepare("UPDATE papeleria SET descripcion = ?, cantidad = ?, unidad = ? WHERE CODIGO = ?");
-            $stmt->execute([$descripcion, $cantidad, $unidad, $id_producto]);
-            $mensaje = "<p class='btn-success'>Producto actualizado correctamente.</p>";
-            // Actualizar la variable $producto para mostrar los nuevos datos en el formulario
-            $stmt = $pdo->prepare("SELECT * FROM descripcion WHERE CODIGO = ?");
-            $stmt->execute([$id_producto]);
-            $producto = $stmt->fetch();
+            // Actualizar la información del producto
+            $sql = "UPDATE `$categoria_actual` SET CODIGO = ?, CODIGO_BARRAS = ?, PRODUCTO = ?, CANT = ?, UNIDAD = ? WHERE CODIGO = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$nuevo_codigo, $codigo_barras, $descripcion, $cantidad, $unidad, $codigo_antiguo]);
+
+            // Redirigir a la página de la categoría después de una actualización exitosa
+            header("Location: producto_categoria.php?categoria=" . urlencode($categoria_actual));
+            exit();
+
         } catch (PDOException $e) {
             $mensaje = "<p class='btn-danger'>Error al actualizar el producto: " . $e->getMessage() . "</p>";
         }
@@ -51,32 +66,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $producto) {
 }
 ?>
 
-<h2>Editar Producto</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Producto</title>
+</head>
+<body>
+    <h2>Editar Producto</h2>
+    <p><a href="ver_productos.php?categoria=<?php echo urlencode($categoria); ?>">Regresar a Productos</a></p>
+    
+    <?php echo $mensaje; ?>
 
-<?php echo $mensaje; ?>
+    <?php if ($producto): ?>
+        <form action="editar_producto.php?id=<?php echo urlencode($producto['CODIGO']); ?>&categoria=<?php echo urlencode($categoria); ?>" method="POST">
+            <input type="hidden" name="codigo_antiguo" value="<?php echo htmlspecialchars($producto['CODIGO']); ?>">
+            <input type="hidden" name="categoria_actual" value="<?php echo htmlspecialchars($categoria); ?>">
 
-<?php if ($producto): ?>
-    <form action="editar_producto.php?id=<?php echo htmlspecialchars($producto['CODIGO']); ?>" method="POST">
-        <input type="hidden" name="id_producto" value="<?php echo htmlspecialchars($producto['CODIGO']); ?>">
+            <label for="nuevo_codigo">Código del Producto:</label>
+            <input type="text" id="nuevo_codigo" name="nuevo_codigo" value="<?php echo htmlspecialchars($producto['CODIGO']); ?>" required>
+            <br><br>
 
-        <label for="nombre">CODIGO:</label>
-        <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($producto['CODIGO']); ?>" required>
-        
-        <label for="nombre">PRODUCTO:</label>
-        <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($producto['PRODUCTO']); ?>" required>
+            <label for="codigo_barras">Código de Barras:</label>
+            <input type="text" id="codigo_barras" name="codigo_barras" value="<?php echo htmlspecialchars($producto['CODIGO_BARRAS']); ?>">
+            <br><br>
 
-        <label for="descripcion">CANTIDAD</label>
-        <textarea id="descripcion" name="descripcion"><?php echo htmlspecialchars($producto['CANTIDAD']); ?></textarea>
-        
-        <label for="descripcion">UNIDAD</label>
-        <textarea id="descripcion" name="descripcion"><?php echo htmlspecialchars($producto['CANTIDAD']); ?></textarea>
+            <label for="descripcion">Descripción del Producto:</label>
+            <input type="text" id="descripcion" name="descripcion" value="<?php echo htmlspecialchars($producto['PRODUCTO']); ?>" required>
+            <br><br>
 
-        <button type="submit" class="btn btn-warning">Actualizar Producto</button>
-        <a href="productos.php" class="btn">Volver a Productos</a>
-    </form>
-<?php else: ?>
-    <p>No se pudo cargar el producto para edición.</p>
-    <a href="productos.php" class="btn">Volver a Productos</a>
-<?php endif; ?>
+            <label for="cantidad">Cantidad:</label>
+            <input type="number" id="cantidad" name="cantidad" value="<?php echo htmlspecialchars($producto['CANT']); ?>" required>
+            <br><br>
 
-<?php include 'includes/footer.php'; ?>
+            <label for="unidad">Unidad:</label>
+            <select id="unidad" name="unidad" required>
+                <?php 
+                    $unidades = ['UNIDAD', 'CAJA', 'EMPAQUE', 'PACA', 'PAR', 'FRASCO'];
+                    foreach ($unidades as $un): 
+                ?>
+                    <option value="<?php echo $un; ?>" <?php echo ($producto['UNIDAD'] === $un) ? 'selected' : ''; ?>><?php echo $un; ?></option>
+                <?php endforeach; ?>
+            </select>
+            <br><br>
+
+            <button type="submit" name="editar_producto">Actualizar Producto</button>
+        </form>
+    <?php endif; ?>
+
+</body>
+</html>
+
+<?php require_once 'includes/footer.php'; ?>
