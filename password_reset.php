@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
                     <h2>Recuperar Contraseña</h2>
                 </div>
                 <div class="card-body">
-                    <p>Inegrsa tu correo y la nueva contraseña para actualizarla.</p>
+                    <p>Ingresa tu correo y la nueva contraseña para actualizarla.</p>
                     <?php echo $mensaje; ?>
                     <form action="password_reset.php" method="POST">
                         <div class="form-group">
