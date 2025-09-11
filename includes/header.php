@@ -58,21 +58,27 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <?php
         // Solo muestra el botón de cerrar sesión si el usuario está logueado
         // Y no está en la página de login
-        if (isset($_SESSION['user_id']) && $current_page !== 'login.php') {
+        if (isset($_SESSION['user_id']) && $current_page !== 'login.php' && $current_page !== 'register.php' && $current_page !== 'password_reset.php') {
             echo '
             <nav>
-                <ul>
-                    <il><a href="index.php">Inicio</a></li>
-                    <li><a href="producto_categoria.php">Productos</a></li>
-                    <li><a href="categorias.php">Categorías</a></li>
-                    <li><a href="reportes.php">Reportes</a></li>
-                    <li><a href="buscar_producto.php">Buscar</a></li>
-                </ul>
-            </nav>
-            <a href="logout.php" class="btn btn-danger btn-logout">Cerrar Sesión</a>';
+                <ul class= "nav nav-pills">
+                    <li class="nav-item"><a class="nav-link" href="index.php">Inicio</a></li>';
+                
+                if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+                    
+                    echo '<li class="nav-item"><a class="nav-link" href="producto_categoria.php">Productos</a></li>';
+                    echo '<li class="nav-item"><a class="nav-link" href="reportes.php">Reportes</a></li>';
+                }
+
+                //Opciones para todos los usuarios
+                echo '<li class="nav-item"><a class="nav-link" href="categorias.php">Categorías</a></li>';
+                echo '<li class="nav-item"><a class="nav-link" href="buscar_producto.php">Buscar</a></li>';
+                echo '<li class="nav-item"><a class="nav-link" href="solicitudes.php">Solicitudes</a></li>';
+
+                echo '</ul></nav>';
+                echo '<a href="logout.php" class="btn-logout">Cerrar Sesión</a>';
         }
         ?>
     </div>
-
-    <div class="container">
+    <div class="container main-content">
         <!-- El contenido de la página se insertará aquí -->

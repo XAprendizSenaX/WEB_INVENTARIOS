@@ -9,6 +9,7 @@ include 'includes/header.php';
 $mensaje = '';
 $estadisticas_categorias = [];
 
+
 try {
     // Primero, obtener todas las categorías de la tabla 'categorias'
     $stmt_categorias = $pdo->query("SELECT nombre_categoria FROM categorias ORDER BY nombre_categoria");
