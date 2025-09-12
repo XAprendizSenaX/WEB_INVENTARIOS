@@ -7,6 +7,7 @@ require_once 'includes/header.php';
 
 $mensaje = '';
 $categorias = [];
+$user_role = $_SESSION['role'] ?? 'user'; // Obtener el rol del usuario, si no está definido, es un invitado
 
 // --- Funciones auxiliares ---
 
@@ -44,84 +45,61 @@ function eliminarTablaCategoria(PDO $pdo, $nombre)
 
 // --- Procesamiento de formularios ---
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $user_role === 'admin') {
     // Crear categoría
     if (isset($_POST['nueva_categoria'])) {
         $nombre = trim($_POST['nueva_categoria_nombre']);
-        if (!$nombre) {
-            $mensaje = "<p class='btn-danger'>El nombre de la categoría no puede estar vacío.</p>";
-        } elseif (!validarNombreCategoria($nombre)) {
-            $mensaje = "<p class='btn-danger'>Solo letras, números y guiones bajos.</p>";
-        } else {
+        if (!empty($nombre) && validarNombreCategoria($nombre)) {
             try {
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM categorias WHERE nombre_categoria = ?");
+                // Agregar la categoría a la tabla `categorias`
+                $stmt = $pdo->prepare("INSERT INTO categorias (nombre_categoria) VALUES (?)");
                 $stmt->execute([$nombre]);
-                if ($stmt->fetchColumn()) {
-                    $mensaje = "<p class='btn-danger'>La categoría '$nombre' ya existe.</p>";
-                } else {
-                    $pdo->beginTransaction();
-                    crearTablaCategoria($pdo, $nombre);
-                    $stmt = $pdo->prepare("INSERT INTO categorias (nombre_categoria) VALUES (?)");
-                    $stmt->execute([$nombre]);
-                    $pdo->commit();
-                    $_SESSION['success_message'] = "Categoría '$nombre' creada correctamente.";
-                    header("Location: categorias.php");
-                    exit;
-                }
-            } catch (Exception $e) {
-                if ($pdo->inTransaction()) {
-                    $pdo->rollBack();
-                }
-                $mensaje = "<p class='btn-danger'>Error: " . $e->getMessage() . "</p>";
+
+                // Crear la tabla para la nueva categoría
+                crearTablaCategoria($pdo, $nombre);
+                $mensaje = "<p class='btn-success'>✅ Categoría '<b>" . htmlspecialchars($nombre) . "</b>' creada correctamente.</p>";
+            } catch (PDOException $e) {
+                $mensaje = "<p class='btn-danger'>❌ Error al crear la categoría: " . $e->getMessage() . "</p>";
             }
+        } else {
+            $mensaje = "<p class='btn-danger'>❌ Error: Nombre de categoría no válido o vacío.</p>";
         }
     }
 
     // Eliminar categoría
     if (isset($_POST['eliminar_categoria'])) {
         $nombre = trim($_POST['eliminar_categoria_nombre']);
-        if (!$nombre) {
-            $mensaje = "<p class='btn-danger'>Debe seleccionar una categoría para eliminar.</p>";
-        } elseif (!validarNombreCategoria($nombre)) {
-            $mensaje = "<p class='btn-danger'>Nombre de categoría inválido.</p>";
-        } else {
-            eliminarTablaCategoria($pdo, $nombre);
-            $stmt = $pdo->prepare("DELETE FROM categorias WHERE nombre_categoria = ?");
-            $stmt->execute([$nombre]);
-            $_SESSION['success_message'] = "Categoría '$nombre' eliminada correctamente.";
-            header("Location: categorias.php");
-            exit;
+        if (!empty($nombre) && validarNombreCategoria($nombre)) {
+            try {
+                // Eliminar la categoría de la tabla `categorias`
+                $stmt = $pdo->prepare("DELETE FROM categorias WHERE nombre_categoria = ?");
+                $stmt->execute([$nombre]);
+
+                // Eliminar la tabla de la categoría
+                eliminarTablaCategoria($pdo, $nombre);
+                $mensaje = "<p class='btn-success'>✅ Categoría '<b>" . htmlspecialchars($nombre) . "</b>' eliminada correctamente.</p>";
+            } catch (PDOException $e) {
+                $mensaje = "<p class='btn-danger'>❌ Error al eliminar la categoría: " . $e->getMessage() . "</p>";
+            }
         }
     }
 }
 
-// Lógica para mostrar mensajes de sesión
-if (isset($_SESSION['success_message'])) {
-    $mensaje = "<p class='btn-success'>" . htmlspecialchars($_SESSION['success_message']) . "</p>";
-    unset($_SESSION['success_message']); // Limpiar el mensaje de la sesión
-}
-
-// --- Obtener categorías ---
+// --- Cargar categorías para la vista ---
 try {
     $stmt = $pdo->query("SELECT nombre_categoria FROM categorias ORDER BY nombre_categoria");
     $categorias = $stmt->fetchAll(PDO::FETCH_COLUMN);
 } catch (PDOException $e) {
-    $mensaje = "<p class='btn-danger'>Error al cargar las categorías: " . $e->getMessage() . "</p>";
-    $categorias = [];
+    $mensaje = "<p class='btn-danger'>❌ Error al cargar las categorías: " . $e->getMessage() . "</p>";
 }
+
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Gestor de Categorías</title>
-</head>
-<body>
-    <h2>Gestor de Categorías</h2>
-    <?php echo $mensaje; ?>
+<h2>Gestión de Categorías</h2>
+<?php echo $mensaje; ?>
 
-    <!-- Crear nueva categoría -->
+<?php if ($user_role === 'admin'): ?>
+    <!-- Formulario para crear categoría - Visible solo para admin -->
     <h3>Crear Nueva Categoría</h3>
     <form action="categorias.php" method="POST">
         <label for="nueva_categoria_nombre">Nombre de la Categoría:</label>
@@ -129,28 +107,29 @@ try {
         <button type="submit" name="nueva_categoria">Crear</button>
     </form>
     <hr>
+<?php endif; ?>
 
-    <!-- Listado de categorías -->
-    <h3>Categorías Existentes</h3>
-    <?php if ($categorias): ?>
-        <ul>
-            <?php foreach ($categorias as $cat): ?>
-                <li>
-                    <?php echo htmlspecialchars($cat); ?>
-                    <a href="ver_productos.php?categoria=<?php echo urlencode($cat); ?>">Ver Productos</a>
-                    <a href="agregar_producto.php?categoria=<?php echo urlencode($cat); ?>">Agregar Producto</a>
+<!-- Listado de categorías - Visible para ambos roles -->
+<?php if ($categorias): ?>
+    <ul>
+        <?php foreach ($categorias as $cat): ?>
+            <li>
+                <?php echo htmlspecialchars(ucfirst($cat)); ?>
+                <a class="btn btn-dark" href="ver_productos.php?categoria=<?php echo urlencode($cat); ?>">Ver Productos</a>
+                <?php if ($user_role === 'admin'): ?>
+                    <!-- Opciones de gestión - Visible solo para admin -->
+                    <a class="btn btn-success" href="agregar_producto.php?categoria=<?php echo urlencode($cat); ?>">Agregar Producto</a>
                     <form action="categorias.php" method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar la categoría <?php echo htmlspecialchars($cat); ?>? Esta acción no se puede deshacer.');">
                         <input type="hidden" name="eliminar_categoria_nombre" value="<?php echo htmlspecialchars($cat); ?>">
-                        <button type="submit" name="eliminar_categoria" style="color:red; background:none; border:none; cursor:pointer;">Eliminar</button>
+                        <button class="btn btn-danger" type="submit" name="eliminar_categoria">Eliminar</button>
                     </form>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php else: ?>
-        <p>No hay categorías disponibles.</p>
-    <?php endif; ?>
-    <hr>
-</body>
-</html>
+                <?php endif; ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+<?php else: ?>
+    <p>No hay categorías disponibles.</p>
+<?php endif; ?>
+<hr>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php include 'includes/footer.php'; ?>

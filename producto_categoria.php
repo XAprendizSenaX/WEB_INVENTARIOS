@@ -38,8 +38,8 @@ try {
         ?>
 
         <?php if (!empty($productos)): ?>
-            <table>
-                <thead>
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
                     <tr>
                         <th>CÓDIGO</th>
                         <th>CÓDIGO DE BARRAS</th>

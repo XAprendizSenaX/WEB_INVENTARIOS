@@ -1,6 +1,14 @@
 <?php
 // agregar_producto.php
 // Este script agrega un nuevo producto a la categoría (tabla) seleccionada
+
+session_start();
+//Control de acceso: solo para daministradores
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location:index.php");
+    exit();
+}
+
 include 'includes/db.php';
 include 'includes/header.php';
 
@@ -46,26 +54,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $categoria_seleccionada) {
 }
 ?>
 
-<h2>Agregar Nuevo Producto</h2>
 <?php echo $mensaje; ?>
 
 <?php if ($categoria_seleccionada): ?>
-    <h3>Agregando a la categoría: "<?php echo htmlspecialchars($categoria_seleccionada); ?>"</h3>
+    <h2>Agregando Producto a la Categoría: "<?php echo htmlspecialchars(ucfirst($categoria_seleccionada)); ?>"</h2>
     <form action="agregar_producto.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>" method="POST">
-        <label for="codigo">Código:</label>
-        <input type="text" id="codigo" name="CODIGO" required>
-
-        <label for="producto">Nombre del Producto:</label>
-        <input type="text" id="producto" name="PRODUCTO" required>
-        
-        <label for="cant">Cantidad:</label>
-        <input type="number" id="cant" name="CANT" step="1" required>
-
-        <label for="unidad">Unidad:</label>
-        <input type="text" id="unidad" name="UNIDAD" required>
-
+        <div class="form-group">
+            <label for="codigo">Código:</label>
+            <input type="text" id="codigo" name="CODIGO" required>
+        </div>
+        <div class="form-group">
+            <label for="producto">Nombre del Producto:</label>
+            <input type="text" id="producto" name="PRODUCTO" required>
+        </div>
+        <div class="form-group">
+            <label for="cant">Cantidad:</label>
+            <input type="number" id="cant" name="CANT" step="1" required>
+        </div>
+        <div class="form-group">
+            <label for="unidad">Unidad:</label>
+            <input type="text" id="unidad" name="UNIDAD" required>
+        </div>
         <button type="submit" class="btn btn-primary">Agregar Producto</button>
-        <a href="categorias.php" class="btn">Volver a Categorías</a>
+        <a href="categorias.php" class="btn btn-success">Volver a Categorías</a>
     </form>
 <?php else: ?>
     <p>Por favor, seleccione una categoría desde la página <a href="categorias.php">Gestor de Categorías</a>.</p>

@@ -76,7 +76,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 echo '<li class="nav-item"><a class="nav-link" href="solicitudes.php">Solicitudes</a></li>';
 
                 echo '</ul></nav>';
-                echo '<a href="logout.php" class="btn-logout">Cerrar Sesión</a>';
+                echo '<a href="logout.php" class="btn-logout" style="text-align: center;">Cerrar Sesión</a>';
         }
         ?>
     </div>

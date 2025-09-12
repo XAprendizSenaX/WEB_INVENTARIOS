@@ -15,7 +15,7 @@ include 'includes/header.php';
 $mensaje = '';
 $categoria_seleccionada = isset($_GET['categoria']) ? $_GET['categoria'] : null;
 $productos = [];
-
+$user_role = $_SESSION['role'] ?? 'user';
 // --- Validacion Inicial de la categoría seleccionada ---
 if (empty($categoria_seleccionada)) {
     echo "<p class='btn-danger'>❌ Error: No se ha especificado una categoría para mostrar productos.</p>";
@@ -64,7 +64,8 @@ try {
     <?php echo $mensaje; ?>
 
     <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
-        <a href="agregar_producto.php?categoria=<?php echo urlencode($categoria_seleccionada); ?>" class="btn btn-success mb-3">Agregar Nuevo Producto</a>
+        <a href="agregar_producto.php?categoria=<?php echo urlencode($categoria_seleccionada); ?>"
+            class="btn btn-success mb-3">Agregar Nuevo Producto</a>
     <?php endif; ?>
 
     <?php if (!empty($productos)): ?>
@@ -75,29 +76,36 @@ try {
                     <th>CODIGO DE BARRAS</th>
                     <th>DESCRIPCION</th>
                     <th>CANTIDAD</th>
-                    <th>ACCIONES</th>
-                </tr>
+                    <?php if ($user_role === 'admin'): ?>
+                            <th>ACCIONES</th>
+                        <?php endif; ?>
+                    </tr>
             </thead>
             <tbody>
                 <?php foreach ($productos as $producto): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($producto ['CODIGO']); ?></td>
-                    <td><?php echo htmlspecialchars($producto ['CODIGO_BARRAS']); ?></td>
-                    <td><?php echo htmlspecialchars($producto ['PRODUCTO']); ?></td>
-                    <td><?php echo htmlspecialchars($producto ['CANT']); ?></td>
-                    <td>
-                        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
-                            <a href="editar_producto.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>&id=<?php echo htmlspecialchars($producto['CODIGO']); ?>" class="btn btn-warning">Editar</a>
-                            <a href="ver_productos.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>&action=eliminar&id=<?php echo htmlspecialchars($producto['CODIGO']); ?>" class="btn btn-danger" onclick="return confirm ('¿Está seguro de que desea eliminar el producto?');">Eliminar</a>
-                        <?php endif; ?>
-                    </td>
-                </tr>
+                    <tr>
+                        <td><?php echo htmlspecialchars($producto['CODIGO']); ?></td>
+                        <td><?php echo htmlspecialchars($producto['CODIGO_BARRAS']); ?></td>
+                        <td><?php echo htmlspecialchars($producto['PRODUCTO']); ?></td>
+                        <td><?php echo htmlspecialchars($producto['CANT']); ?></td>
+                        <td>
+                            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                                <a href="editar_producto.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>&id=<?php echo htmlspecialchars($producto['CODIGO']); ?>"
+                                    class="btn btn-warning">Editar</a>
+                                <a href="ver_productos.php?categoria=<?php echo htmlspecialchars($categoria_seleccionada); ?>&action=eliminar&id=<?php echo htmlspecialchars($producto['CODIGO']); ?>"
+                                    class="btn btn-danger"
+                                    onclick="return confirm ('¿Está seguro de que desea eliminar el producto?');">Eliminar</a>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
     <?php else: ?>
-        <p>No hay productos registrados en el inventario para la categoría '<?php echo htmlspecialchars($categoria_seleccionada); ?>'.</p>
+        <p>No hay productos registrados en el inventario para la categoría
+            '<?php echo htmlspecialchars($categoria_seleccionada); ?>'.</p>
     <?php endif; ?>
+    <div><a class="btn btn-dark" href="categorias.php">Volver a Categorías</a></div>
 </div>
 
 <?php include 'includes/footer.php'; ?>
