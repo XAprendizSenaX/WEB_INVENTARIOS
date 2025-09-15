@@ -68,12 +68,16 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     
                     echo '<li class="nav-item"><a class="nav-link" href="producto_categoria.php">Productos</a></li>';
                     echo '<li class="nav-item"><a class="nav-link" href="reportes.php">Reportes</a></li>';
+                    echo '<li class="nav-item"><a class="nav-link" href="ver_solicitudes.php">Ver Solicitudes</a></li>';
                 }
 
                 //Opciones para todos los usuarios
                 echo '<li class="nav-item"><a class="nav-link" href="categorias.php">Categorías</a></li>';
                 echo '<li class="nav-item"><a class="nav-link" href="buscar_producto.php">Buscar</a></li>';
-                echo '<li class="nav-item"><a class="nav-link" href="solicitudes.php">Solicitudes</a></li>';
+                
+                if (isset($_SESSION['role']) && $_SESSION['role']=== 'user'){
+                    echo '<li class="nav-item"><a class="nav-link" href="solicitudes.php">Solicitudes</a></li>';
+                }
 
                 echo '</ul></nav>';
                 echo '<a href="logout.php" class="btn-logout" style="text-align: center;">Cerrar Sesión</a>';
